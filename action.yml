@@ -1,0 +1,22 @@
+name: setup-msvc-env
+
+inputs:
+  arch:
+    required: false
+    default: "x64"
+  sdk:
+    required: false
+    default: ""
+  toolset:
+    required: false
+    default: ""
+  vsversion:
+    required: false
+    default: "latest"
+
+runs:
+  using: "composite"
+  steps:
+    - shell: pwsh
+      run: |
+        & "$env:GITHUB_ACTION_PATH/setup-msvc-env.ps1" -Arch "${{ inputs.arch }}" -Sdk "${{ inputs.sdk }}" -ToolSet "${{ inputs.toolset }}" -VsVersion "${{ inputs.vsversion }}"
