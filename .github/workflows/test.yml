@@ -1,0 +1,92 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+jobs:
+  test:
+    name: Test
+
+    strategy:
+      matrix:
+        include:
+          - runs-on: windows-latest
+            arch: ''
+            toolset: ''
+          - runs-on: windows-latest
+            arch: 'x64'
+            toolset: ''
+          - runs-on: windows-latest
+            arch: 'x86'
+            toolset: ''
+          - runs-on: windows-latest
+            arch: 'x64_arm64'
+            toolset: ''
+          - runs-on: windows-latest
+            arch: 'x64_arm'
+            toolset: ''
+          - runs-on: windows-latest
+            arch: ''
+            toolset: 'v142'
+          - runs-on: windows-latest
+            arch: ''
+            toolset: 'v143'
+
+          - runs-on: windows-11-arm
+            arch: ''
+            toolset: ''
+          - runs-on: windows-11-arm
+            arch: 'arm64'
+            toolset: ''
+          - runs-on: windows-11-arm
+            arch: 'x64'
+            toolset: ''
+          - runs-on: windows-11-arm
+            arch: 'x86'
+            toolset: ''
+          - runs-on: windows-11-arm
+            arch: ''
+            toolset: 'v143'
+
+          - runs-on: windows-2025-vs2026
+            arch: ''
+            toolset: ''
+          - runs-on: windows-2025-vs2026
+            arch: 'x64'
+            toolset: ''
+          - runs-on: windows-2025-vs2026
+            arch: 'x86'
+            toolset: ''
+          - runs-on: windows-2025-vs2026
+            arch: 'x64_arm64'
+            toolset: ''
+          - runs-on: windows-2025-vs2026
+            arch: ''
+            toolset: 'v142'
+          - runs-on: windows-2025-vs2026
+            arch: ''
+            toolset: 'v143'
+          - runs-on: windows-2025-vs2026
+            arch: ''
+            toolset: 'v145'
+
+      fail-fast: false
+
+    runs-on: ${{ matrix.runs-on }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup MSVC
+        uses: ./
+        with:
+            arch: ${{ matrix.arch }}
+            toolset: ${{ matrix.toolset }}
+
+      - name: Check VC++
+        shell: cmd
+        run: cl.exe

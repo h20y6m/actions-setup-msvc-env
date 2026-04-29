@@ -1,22 +1,31 @@
 name: setup-msvc-env
+description: Setup MSVC environment variables
 
 inputs:
   arch:
+    description: Target architecture
     required: false
-    default: "x64"
+    default: ""
   sdk:
+    description: Windows SDK version
     required: false
     default: ""
   toolset:
+    description: VC++ compiler toolset version
     required: false
     default: ""
   vsversion:
+    description: Visual Studio version
     required: false
-    default: "latest"
+    default: ""
 
 runs:
   using: "composite"
   steps:
     - shell: pwsh
       run: |
-        & "$env:GITHUB_ACTION_PATH/setup-msvc-env.ps1" -Arch "${{ inputs.arch }}" -Sdk "${{ inputs.sdk }}" -ToolSet "${{ inputs.toolset }}" -VsVersion "${{ inputs.vsversion }}"
+        & "$env:GITHUB_ACTION_PATH/setup-msvc-env.ps1" `
+            -Arch "${{ inputs.arch }}" `
+            -Sdk "${{ inputs.sdk }}" `
+            -Toolset "${{ inputs.toolset }}" `
+            -VsVersion "${{ inputs.vsversion }}"
