@@ -6,7 +6,7 @@ GitHub Action: setup MSVC environment variables
 ### Inputs
 
 ```yaml
-- uses: h20y6m/actions-setup-msvc-env@v1
+- uses: h20y6m/actions-setup-msvc-env@v2
   with:
     # Target architecture.
     # Optional. Default is $RUNNER_ARCH.
