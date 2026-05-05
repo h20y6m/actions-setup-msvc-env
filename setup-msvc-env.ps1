@@ -26,39 +26,39 @@ if ($VsVersion -match "^(\d+)(\.\d)?$") {
     $max = ([int]$matches[1] + 1)
     $VsVersion = "[$VsVersion,$max)"
 }
-# Write-Host "::notice::VsVersion = `"$VsVersion`""
 
 $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
-# Write-Host "::notice::vswhere = [$vswhere]"
 
 if (-not (Test-Path $vswhere)) {
-    Write-Host "##[error]vswhere.exe not found"
+    Write-Host "::error::vswhere.exe not found"
     exit 1
 }
 
 if ($VsVersion) {
-    $vspath = & $vswhere -version $VsVersion -products * -requires Microsoft.Component.MSBuild -property installationPath
+    $vspath = & $vswhere -version $VsVersion -latest -products * -requires Microsoft.Component.MSBuild -property installationPath
 }
 else {
     $vspath = & $vswhere -latest -products * -requires Microsoft.Component.MSBuild -property installationPath
 }
 if ($LASTEXITCODE) {
-    Write-Host "##[error]vswhere failed: $LASTEXITCODE"
+    Write-Host "::error::vswhere failed: $LASTEXITCODE"
     if ($vspath) {
-        $vspath | Where-Object { $_ -match "^Error" } | ForEach-Object { Write-Error $_ }
+        Write-Host "::group::vswhere error messages"
+        $vspath | Where-Object { $_ -match "^Error" } | ForEach-Object { Write-Host $_ }
+        Write-Host "::endgroup::"
     }
     exit 1
 }
 
 if (-not $vspath) {
-    Write-Host "##[error]Visual Studio not found"
+    Write-Host "::error::Visual Studio not found"
     exit 1
 }
 
 $vcvars = Join-Path $vspath "VC\Auxiliary\Build\vcvarsall.bat"
 
 if (-not (Test-Path $vcvars)) {
-    Write-Host "##[error]vcvarsall.bat not found"
+    Write-Host "::error::vcvarsall.bat not found"
     exit 1
 }
 
@@ -83,6 +83,7 @@ if ($Toolset) {
         }
         else {
             # VS2026 hasn't Microsoft.VCToolsVersion.v145.default.txt
+            # Scan the v145 directory to find the latest version.
             $vPath = Join-Path $vspath "VC\Auxiliary\Build\$Toolset"
             if (Test-Path $vPath) {
                 $toolsVersions = Get-ChildItem -Path $vPath -File -Filter "Microsoft.VCToolsVersion.VC.*.txt" | ForEach-Object {
@@ -104,7 +105,6 @@ if ($Toolset) {
     }
     $optVcvars += " -vcvars_ver=$Toolset"
 }
-# Write-Host "::notice::optVcvars = [$optVcvars]"
 
 # Run vcvarsall.bat and capture environment variables
 $tmpBefore = New-TemporaryFile
@@ -122,15 +122,17 @@ finally {
 
 # Check vcvarsall.bat error
 if ($exitcode) {
-    Write-Host "vcvarsall.bat failed: $exitcode"
+    Write-Host "::error::vcvarsall.bat failed: $exitcode"
     exit 1
 }
 $errVcvars = $output | Where-Object { $_ -match "^\[ERROR" }
 if ($errVcvars) {
-    Write-Host "##[error]vcvarsall.bat failed"
+    Write-Host "::error::vcvarsall.bat failed"
+    Write-Host "::group::vcvarsall.bat error messages"
     foreach ($line in $errVcvars) {
-        Write-Host "##[error]$line"
+        Write-Host "$line"
     }
+    Write-Host "::endgroup::"
     exit 1
 }
 
@@ -138,7 +140,6 @@ if ($errVcvars) {
 $before = @{}
 foreach ($line in $outBefore) {
     if ($line -match "^([^=]+?)=(.*)$") {
-        $key = $matches[1].ToLower()
         $before[$matches[1]] = $matches[2]
     }
 }
@@ -149,10 +150,12 @@ foreach ($line in $outAfter) {
     if ($line -match "^([^=]+?)=(.*)$") {
         $name = $matches[1]
         $value = $matches[2]
-        $key = $name.ToLower()
-        if (-not $before.ContainsKey($key) -or $before[$key] -ne $value) {
+        if (-not $before.ContainsKey($name) -or $before[$name] -ne $value) {
             Write-Host "Setting $name"
-            "$name=$value" >> $env:GITHUB_ENV
+            Set-Item -Path "env:\$name" -Value $value
+            if ($env:GITHUB_ENV) {
+                "$name=$value" >> $env:GITHUB_ENV
+            }
         }
     }
 }

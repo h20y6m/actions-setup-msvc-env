@@ -6,87 +6,109 @@ on:
       - main
     paths-ignore:
       - '**.md'
+  schedule:
+    - cron: '37 2 * * 6'
+  workflow_dispatch:
+
 jobs:
   test:
     name: Test
-
-    strategy:
-      matrix:
-        include:
-          - runs-on: windows-latest
-            arch: ''
-            toolset: ''
-          - runs-on: windows-latest
-            arch: 'x64'
-            toolset: ''
-          - runs-on: windows-latest
-            arch: 'x86'
-            toolset: ''
-          - runs-on: windows-latest
-            arch: 'x64_arm64'
-            toolset: ''
-          - runs-on: windows-latest
-            arch: 'x64_arm'
-            toolset: ''
-          - runs-on: windows-latest
-            arch: ''
-            toolset: 'v142'
-          - runs-on: windows-latest
-            arch: ''
-            toolset: 'v143'
-
-          - runs-on: windows-11-arm
-            arch: ''
-            toolset: ''
-          - runs-on: windows-11-arm
-            arch: 'arm64'
-            toolset: ''
-          - runs-on: windows-11-arm
-            arch: 'x64'
-            toolset: ''
-          - runs-on: windows-11-arm
-            arch: 'x86'
-            toolset: ''
-          - runs-on: windows-11-arm
-            arch: ''
-            toolset: 'v143'
-
-          - runs-on: windows-2025-vs2026
-            arch: ''
-            toolset: ''
-          - runs-on: windows-2025-vs2026
-            arch: 'x64'
-            toolset: ''
-          - runs-on: windows-2025-vs2026
-            arch: 'x86'
-            toolset: ''
-          - runs-on: windows-2025-vs2026
-            arch: 'x64_arm64'
-            toolset: ''
-          - runs-on: windows-2025-vs2026
-            arch: ''
-            toolset: 'v142'
-          - runs-on: windows-2025-vs2026
-            arch: ''
-            toolset: 'v143'
-          - runs-on: windows-2025-vs2026
-            arch: ''
-            toolset: 'v145'
-
-      fail-fast: false
-
     runs-on: ${{ matrix.runs-on }}
 
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # latest runner (VS2022)
+          # default
+          - runs-on: windows-latest
+          # arch
+          - runs-on: windows-latest
+            arch: 'x64'
+          - runs-on: windows-latest
+            arch: 'x86'
+          # arch (cross)
+          - runs-on: windows-latest
+            arch: 'x64_arm64'
+            cross: true
+          - runs-on: windows-latest
+            arch: 'x64_arm'
+            cross: true
+          # toolset
+          - runs-on: windows-latest
+            toolset: 'v142'
+          - runs-on: windows-latest
+            toolset: 'v143'
+
+          # beta runner (VS2026)
+          # default
+          - runs-on: windows-2025-vs2026
+          # arch
+          - runs-on: windows-2025-vs2026
+            arch: 'x64'
+          - runs-on: windows-2025-vs2026
+            arch: 'x86'
+          # arch (cross)
+          - runs-on: windows-2025-vs2026
+            arch: 'x64_arm64'
+            cross: true
+          # toolset
+          - runs-on: windows-2025-vs2026
+            toolset: 'v143'
+          - runs-on: windows-2025-vs2026
+            toolset: 'v145'
+
+          # old runner (VS2022)
+          # default
+          - runs-on: windows-2022
+          # arch
+          - runs-on: windows-2022
+            arch: 'x64'
+          - runs-on: windows-2022
+            arch: 'x86'
+          # arch (cross)
+          - runs-on: windows-2022
+            arch: 'x64_arm64'
+            cross: true
+          - runs-on: windows-2022
+            arch: 'x64_arm'
+            cross: true
+          # toolset
+          - runs-on: windows-2022
+            toolset: 'v142'
+          - runs-on: windows-2022
+            toolset: 'v143'
+
+          # ARM runner (VS2022)
+          # default
+          - runs-on: windows-11-arm
+          # arch
+          - runs-on: windows-11-arm
+            arch: 'arm64'
+          - runs-on: windows-11-arm
+            arch: 'x64'
+          - runs-on: windows-11-arm
+            arch: 'x86'
+          # toolset
+          - runs-on: windows-11-arm
+            toolset: 'v143'
+
     steps:
-      - name: Checkout repository
+      - name: Check out repository
         uses: actions/checkout@v6
 
-      - name: Setup MSVC
+      - name: Set up MSVC
         uses: ./
         with:
             arch: ${{ matrix.arch }}
             toolset: ${{ matrix.toolset }}
 
-      - name: Check VC++
-        shell: cmd
-        run: cl.exe
+      - name: Test native VC++ compiler setup (compile and run)
+        if: ${{ matrix.cross != true }}
+        working-directory: tests
+        run: cl.exe main.c && .\main.exe
+
+      - name: Test cross VC++ compiler setup (compile and header check)
+        if: ${{ matrix.cross == true }}
+        working-directory: tests
+        run: cl.exe main.c && dumpbin.exe /HEADERS .\main.exe
