@@ -31,9 +31,6 @@ jobs:
           - runs-on: windows-latest
             arch: 'x64_arm64'
             cross: true
-          - runs-on: windows-latest
-            arch: 'x64_arm'
-            cross: true
           # toolset
           - runs-on: windows-latest
             toolset: 'v142'
@@ -69,9 +66,6 @@ jobs:
           # arch (cross)
           - runs-on: windows-2022
             arch: 'x64_arm64'
-            cross: true
-          - runs-on: windows-2022
-            arch: 'x64_arm'
             cross: true
           # toolset
           - runs-on: windows-2022
