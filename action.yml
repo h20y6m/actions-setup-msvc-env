@@ -14,6 +14,14 @@ inputs:
     description: VC++ compiler toolset version
     required: false
     default: ""
+  uwp:
+    description: Set the platform type to 'uwp' ('store')
+    required: false
+    default: "false"
+  spectre:
+    description: Use libraries without Spectre mitigations
+    required: false
+    default: "false"
   vsversion:
     description: Visual Studio version
     required: false
@@ -28,4 +36,6 @@ runs:
             -Arch "${{ inputs.arch }}" `
             -Sdk "${{ inputs.sdk }}" `
             -Toolset "${{ inputs.toolset }}" `
+            -Uwp "${{ inputs.uwp }}" `
+            -Spectre "${{ inputs.spectre }}" `
             -VsVersion "${{ inputs.vsversion }}"

@@ -4,8 +4,15 @@ param(
     [string]$Arch = "",
     [string]$Sdk = "",
     [string]$Toolset = "",
+    [object]$Uwp = $false,
+    [object]$Spectre = $false,
     [string]$VsVersion = ""
 )
+
+$ErrorActionPreference = "Stop"
+
+$Uwp = [System.Convert]::ToBoolean($Uwp)
+$Spectre = [System.Convert]::ToBoolean($Spectre)
 
 if (-not $Arch) {
     if ($env:RUNNER_ARCH) {
@@ -66,6 +73,9 @@ Write-Host "Found with vswhere: $vcvars"
 
 # vcvarsall.bat options
 $optVcvars = ""
+if ($Uwp) {
+    $optVcvars += " uwp"
+}
 if ($Sdk) {
     $optVcvars += " $Sdk"
 }
@@ -104,6 +114,9 @@ if ($Toolset) {
         }
     }
     $optVcvars += " -vcvars_ver=$Toolset"
+}
+if ($Spectre) {
+    $optVcvars += " -vcvars_spectre_libs=spectre"
 }
 
 # Run vcvarsall.bat and capture environment variables
